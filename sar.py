@@ -2,28 +2,27 @@ from numpy import *
 from math import *
 from scipy.misc import imsave
 import scipy
-h=1000
-lmin=1000
+h=500
+lmin=500
 l=1000
 x=1000
-k=4e12
 dx=0.5
 dl=0.5
 st=1e-5
 c=3e8
-bw=k*st
+bw=4e7
+k=bw/st
 sp=1.5*bw
-freq=5e8
+freq=2e8
 pwr=100
-tm=3e-5
+tm=2e-5
 slen=tm*sp
 dt=1/sp
-tmin=1414/c
 
 def signalr(t,par):
-	tt=pi*k*pow(t-(st/2),2)
+	tt=pi*k*pow(t-st/2,2)
 	#print t
-	return complex(cos(tt-par),sin(tt-par))*(0<=t and t<st)
+	return complex(cos(tt+par),sin(tt+par))*(0<=t and t<st)
 
 print slen
 snls=zeros(int(sp*st),dtype=complex)
@@ -32,11 +31,14 @@ for i in  range(len(snls)):
 snlr=zeros([int(x/dx),int(slen)],dtype=complex)
 snl2=zeros([int(x/dx),int(slen)],dtype=complex)
 #snl3=zeros([int(x/dx),int(slen)],dtype=complex)
-for i in  range(len(snlr)):
-	rr=sqrt(pow(h,2)+pow(1500,2)+pow(i*dx-500,2))
+def PointTarget(rxx,t,px,py):
+	rr=sqrt(pow(h,2)+pow(px,2)+pow(rxx-py,2))
 	tos=2*rr/c
+	return signalr(t-tos,-2*pi*tos*freq)/pow(rr,4)
+		
+for i in  range(len(snlr)):
 	for j in  range(len(snlr[i])):
-		snlr[i][j]=signalr(j*dt-tos,2*pi*tos*freq)/pow(rr,4)
+		snlr[i][j]=PointTarget(i*dx,j*dt,lmin+l/2,x/2)+PointTarget(i*dx,j*dt,lmin+l/2,x/2+100)+PointTarget(i*dx,j*dt,lmin+l/2+100,x/2)
 		#print j
 imsave("test.bmp",real(snlr));
 
@@ -62,7 +64,7 @@ imsave("test5.bmp",real(snl5));
 filt=zeros([int(x/dx),int(l/dl)],dtype=complex)
 for i in range(len(filt)):
 	for j in range(len(filt[i])):
-		rrr=sqrt(pow(j*dl+l,2)+pow(h,2)+pow((i*dx)-x/2,2))
+		rrr=sqrt(pow(j*dl+lmin,2)+pow(h,2)+pow((i*dx)-x/2,2))
 		tos=2*rrr/c
 		par=-tos*2*pi*freq
 		filt[i][j]=complex(cos(par),sin(par))
@@ -71,5 +73,8 @@ snl6=zeros([int(x/dx),int(l/dl)],dtype=complex)
 for i in range(len(snl6[0])):
 	snl6[:,i]=convolve(snl5[:,i],flipud(conjugate(filt[:,i])),'same')
 imsave("test6.bmp",abs(snl6));
-	
-	
+mapp=zeros([int(x/dx),int(l/dl)],dtype=float)
+mapp[int((x/2)/dx)][int((l/2)/dl)]=1
+mapp[int((x/2)/dx)][int((l/2+100)/dl)]=1
+mapp[int((x/2+100)/dx)][int((l/2)/dl)]=1
+imsave("mapp.bmp",mapp);
