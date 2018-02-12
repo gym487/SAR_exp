@@ -3,3 +3,4 @@
 *.o
 *.grc
 *.npy
+*/top_block.py
