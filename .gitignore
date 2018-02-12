@@ -1,1 +1,5 @@
 *.bmp
+*.bin
+*.o
+*.grc
+*.npy

@@ -2,17 +2,18 @@ from numpy import *
 from math import *
 from scipy.misc import imsave
 import scipy
-h=500
-lmin=500
-l=1000
+import time
+h=100
+lmin=100
+l=800
 x=500
-dx=0.2
+dx=0.1
 dl=0.5
-st=1e-5
+st=1e-6
 c=3e8
-bw=4e7
+bw=1e7
 k=bw/st
-sp=1.5*bw
+sp=1.5e7
 freq=1e9
 pwr=100
 tm=2e-5
@@ -25,6 +26,8 @@ def signalr(t,par):
 	return complex(cos(tt+par),sin(tt+par))*(0<=t and t<st)
 
 print slen
+print "1"
+stp=time.time()
 snls=zeros(int(sp*st),dtype=complex)
 for i in  range(len(snls)):
 	snls[i]=signalr(i*dt,0)
@@ -41,12 +44,17 @@ for i in  range(len(snlr)):
 		snlr[i][j]=PointTarget(i*dx,j*dt,lmin+l/2,x/2)+PointTarget(i*dx,j*dt,lmin+l/2,x/2+100)+PointTarget(i*dx,j*dt,lmin+l/2+100,x/2)
 		#print j
 imsave("test.bmp",real(snlr));
-
+print time.time()-stp
+print "2"
 for i in range(len(snlr)):
 	snl2[i]=convolve(snlr[i],flipud(conjugate(snls)),'same')
 imsave("test2.bmp",real(snl2));
+print time.time()-stp
+print "3"
 snl3=fft.fftshift(fft.fft(snl2,axis=0),axes=0)
 imsave("test3.bmp",real(snl3));
+print time.time()-stp
+print "4"
 def rcmc(ll,fr):
 	a=-(2*c*fr*sqrt(((2*freq+c*fr)*(2*freq-c*fr)*(pow(h,2)+pow(ll,2)))/4))/(-pow(c,2)*pow(fr,2)+4*pow(freq,2))
 	rrr=sqrt(pow(ll,2)+pow(h,2)+pow(a,2))
@@ -59,8 +67,12 @@ for i in range(len(snl4)):
 		if(tm*sp>int(r2ti(rcmc(j*dl+lmin,(i*dx/x-0.5)/dx))+st*sp/2) and int(r2ti(rcmc(j*dl+lmin,(i*dx/x-0.5)/dx))+st*sp/2)>=0):
 			snl4[i][j]=snl3[i][int(r2ti(rcmc(j*dl+lmin,(i*dx/x-0.5)/dx))+st*sp/2)]
 imsave("test4.bmp",real(snl4));
+print time.time()-stp
+print "5"
 snl5=fft.ifft(fft.ifftshift(snl4,axes=0),axis=0)
 imsave("test5.bmp",real(snl5));
+print time.time()-stp
+print "6"
 filt=zeros([int(x/dx),int(l/dl)],dtype=complex)
 for i in range(len(filt)):
 	for j in range(len(filt[i])):
@@ -73,8 +85,11 @@ snl6=zeros([int(x/dx),int(l/dl)],dtype=complex)
 for i in range(len(snl6[0])):
 	snl6[:,i]=convolve(snl5[:,i],flipud(conjugate(filt[:,i])),'same')
 imsave("test6.bmp",abs(snl6));
+print time.time()-stp
+print "m"
 mapp=zeros([int(x/dx),int(l/dl)],dtype=float)
 mapp[int((x/2)/dx)][int((l/2)/dl)]=1
 mapp[int((x/2)/dx)][int((l/2+100)/dl)]=1
 mapp[int((x/2+100)/dx)][int((l/2)/dl)]=1
 imsave("mapp.bmp",mapp);
+print time.time()-stp

@@ -1,0 +1,11 @@
+#define bw 2e7
+#define sp 2.2e7
+#define spt (1.0/sp)
+#define st 1e-6
+#define k (bw/st)
+#define prf 1e5
+#define offset st
+#define rt (1.0/prf)
+#define PI M_PI
+#define alpha 0.54
+#define beta 0.46
