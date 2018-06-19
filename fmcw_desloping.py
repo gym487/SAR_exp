@@ -8,11 +8,11 @@ h=100
 lmin=100
 l=800
 x=500
-dx=0.1
+dx=0.05
 dl=0.5
-k=5e7
+k=1e8
 c=3e8
-bw=1e7
+bw=2e7
 st=bw/k
 sp=1.5e7
 freq=1e9
@@ -41,8 +41,8 @@ mix=zeros(int(sst*sp),dtype=complex)
 mixx=zeros(int(sst*sp2),dtype=complex)
 mixx2=zeros(int(sst*sp2),dtype=complex)
 def r2i(r):
-	return 2*k*sst*r/c
-snlr=zeros([int(x/dx),len(mixx)/2],dtype=complex)
+	return 2*r*sp2/(c)
+snlr=zeros([int(x/dx),len(mixx)],dtype=complex)
 #snl2=zeros([int(x/dx),int(slen)],dtype=complex)
 #snl3=zeros([int(x/dx),int(slen)],dtype=complex)
 def PointTarget(i,t,px,py):
@@ -60,8 +60,11 @@ for i in  range(len(snlr)):
 		mixx[j]=(PointTarget(i,j*dtt,lmin+l/2,x/2)+PointTarget(i,j*dtt,lmin+l/2,x/2+100)+PointTarget(i,j*dtt,lmin+l/2+100,x/2))*conjugate(signalr(i*sst+j*dtt,0))
 		#mixx2[j]=signalr(sst*i+j*dtt,0)
 		#print mixx[j]
-	mixx=fft.fft(mixx)
-	snlr[i]=mixx[0:len(snlr[i])]
+	mixx=fft.fftshift(fft.fft(mixx))
+	for j in range(len(mixx)):
+		ph=-pi*pow((j-len(mixx)/2)*sp2/len(mixx),2)/k
+		mixx[j]=mixx[j]*complex(cos(ph),sin(ph))
+	snlr[i]=fft.ifft(fft.ifftshift(mixx))
 	print "i:"+str(i)
 		#print j
 imsave("test.bmp",real(snlr));
@@ -77,9 +80,12 @@ imsave("test3.bmp",real(snl3));
 print time.time()-stp
 print "4"
 def rcmc(ll,fr):
-	a=-(2*c*fr*sqrt(((2*freq+c*fr)*(2*freq-c*fr)*(pow(h,2)+pow(ll,2)))/4))/(-pow(c,2)*pow(fr,2)+4*pow(freq,2))
-	rrr=sqrt(pow(ll,2)+pow(h,2)+pow(a,2))
-	return rrr
+	if(((2*freq+c*fr)*(2*freq-c*fr)*(pow(h,2)+pow(ll,2)))>0):
+		a=-(2*c*fr*sqrt(((2*freq+c*fr)*(2*freq-c*fr)*(pow(h,2)+pow(ll,2)))/4))/(-pow(c,2)*pow(fr,2)+4*pow(freq,2))
+		rrr=sqrt(pow(ll,2)+pow(h,2)+pow(a,2))
+		return rrr
+	else:
+		return (-1)
 
 snl4=zeros([int(x/dx),int(l/dl)],dtype=complex)
 for i in range(len(snl4)):
