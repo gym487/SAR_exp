@@ -2,56 +2,77 @@ from numpy import *
 from math import *
 from scipy.misc import imsave
 import scipy
+from scipy import signal
 import time
 h=100
 lmin=100
 l=800
 x=500
-dx=0.2
+dx=0.1
 dl=0.5
-st=1e-6
+k=1e8
 c=3e8
 bw=1e7
-k=bw/st
+st=bw/k
 sp=1.5e7
 freq=1e9
 pwr=100
 tm=2e-5
 slen=tm*sp
 dt=1/sp
+v=1
+sst=dx/v
+sp2=1e5
+dtt=1/sp2
 
 def signalr(t,par):
-	tt=pi*k*pow(t-st/2,2)
+	tt=pi*k*pow((t%st)-st/2,2)
 	#print t
-	return complex(cos(tt+par),sin(tt+par))*(0<=t and t<st)
-
+	return complex(cos(tt+par),sin(tt+par))
 print slen
 print "1"
 stp=time.time()
 snls=zeros(int(sp*st),dtype=complex)
 for i in  range(len(snls)):
 	snls[i]=signalr(i*dt,0)
-snlr=zeros([int(x/dx),int(slen)],dtype=complex)
-snl2=zeros([int(x/dx),int(slen)],dtype=complex)
+rx=zeros(int(sst*sp),dtype=complex)
+tx=zeros(int(sst*sp),dtype=complex)
+mix=zeros(int(sst*sp),dtype=complex)
+mixx=zeros(int(sst*sp2),dtype=complex)
+mixx2=zeros(int(sst*sp2),dtype=complex)
+def r2i(r):
+	return 2*k*sst*r/c
+snlr=zeros([int(x/dx),len(mixx)/2],dtype=complex)
+#snl2=zeros([int(x/dx),int(slen)],dtype=complex)
 #snl3=zeros([int(x/dx),int(slen)],dtype=complex)
-def PointTarget(rxx,t,px,py):
-	rr=sqrt(pow(h,2)+pow(px,2)+pow(rxx-py,2))
+def PointTarget(i,t,px,py):
+	tt=sst*i+t
+	x=i*dx+t*v
+	rr=sqrt(pow(h,2)+pow(px,2)+pow(x-py,2))
 	tos=2*rr/c
-	return signalr(t-tos,-2*pi*tos*freq)/pow(rr,4)
-		
+	return signalr(tt-tos,-2*pi*tos*freq)/pow(rr,4)
+
+def i2r(i):
+	return i*c/(2*k*sst)
+print str(len(mixx))+"to"+str(len(snlr[1]))
 for i in  range(len(snlr)):
-	for j in  range(len(snlr[i])):
-		snlr[i][j]=PointTarget(i*dx,j*dt,lmin+l/2,x/2)+PointTarget(i*dx,j*dt,lmin+l/2,x/2+100)+PointTarget(i*dx,j*dt,lmin+l/2+100,x/2)
+	for j in  range(len(mixx)):
+		mixx[j]=(PointTarget(i,j*dtt,lmin+l/2,x/2)+PointTarget(i,j*dtt,lmin+l/2,x/2+100)+PointTarget(i,j*dtt,lmin+l/2+100,x/2))*conjugate(signalr(i*sst+j*dtt,0))
+		#mixx2[j]=signalr(sst*i+j*dtt,0)
+		#print mixx[j]
+	mixx=fft.fft(mixx)
+	snlr[i]=mixx[0:len(snlr[i])]
+	print "i:"+str(i)
 		#print j
 imsave("test.bmp",real(snlr));
 print time.time()-stp
 print "2"
-for i in range(len(snlr)):
-	snl2[i]=convolve(snlr[i],flipud(conjugate(snls)),'same')
-imsave("test2.bmp",real(snl2));
+#for i in range(len(snlr)):
+#	snl2[i]=convolve(snlr[i],flipud(conjugate(snls)),'same')
+#imsave("test2.bmp",real(snl2));
 print time.time()-stp
 print "3"
-snl3=fft.fftshift(fft.fft(snl2,axis=0),axes=0)
+snl3=fft.fftshift(fft.fft(snlr,axis=0),axes=0)## range doppler
 imsave("test3.bmp",real(snl3));
 print time.time()-stp
 print "4"
@@ -59,13 +80,13 @@ def rcmc(ll,fr):
 	a=-(2*c*fr*sqrt(((2*freq+c*fr)*(2*freq-c*fr)*(pow(h,2)+pow(ll,2)))/4))/(-pow(c,2)*pow(fr,2)+4*pow(freq,2))
 	rrr=sqrt(pow(ll,2)+pow(h,2)+pow(a,2))
 	return rrr
-def r2ti(r):
-	return 2*r/(c*dt)
+
 snl4=zeros([int(x/dx),int(l/dl)],dtype=complex)
 for i in range(len(snl4)):
 	for j in range(len(snl4[i])):
-		if(tm*sp>int(r2ti(rcmc(j*dl+lmin,(i*dx/x-0.5)/dx))+st*sp/2) and int(r2ti(rcmc(j*dl+lmin,(i*dx/x-0.5)/dx))+st*sp/2)>=0):
-			snl4[i][j]=snl3[i][int(r2ti(rcmc(j*dl+lmin,(i*dx/x-0.5)/dx))+st*sp/2)]
+		#print i,j,j*dl+lmin,(i*dx/x-0.5)/dx
+		if(len(snl3[i])>int(r2i(rcmc(j*dl+lmin,(i*dx/x-0.5)/dx))) and int(r2i(rcmc(j*dl+lmin,(i*dx/x-0.5)/dx)))>=0):
+			snl4[i][j]=snl3[i][int(r2i(rcmc(j*dl+lmin,(i*dx/x-0.5)/dx)))]
 imsave("test4.bmp",real(snl4));
 print time.time()-stp
 print "5"
