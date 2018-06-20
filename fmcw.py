@@ -1,5 +1,6 @@
 from numpy import *
 from math import *
+import cmath
 from scipy.misc import imsave
 import scipy
 from scipy import signal
@@ -10,7 +11,7 @@ l=800
 x=500
 dx=0.1
 dl=0.5
-k=5e7
+k=5e9
 c=3e8
 bw=1e7
 st=bw/k
@@ -20,7 +21,7 @@ pwr=100
 tm=2e-5
 slen=tm*sp
 dt=1/sp
-v=1
+v=10
 sst=dx/v
 sp2=1e5
 dtt=1/sp2
@@ -58,10 +59,11 @@ print str(len(mixx))+"to"+str(len(snlr[1]))
 for i in  range(len(snlr)):
 	for j in  range(len(mixx)):
 		mixx[j]=(PointTarget(i,j*dtt,lmin+l/2,x/2)+PointTarget(i,j*dtt,lmin+l/2,x/2+100)+PointTarget(i,j*dtt,lmin+l/2+100,x/2))*conjugate(signalr(i*sst+j*dtt,0))
-		#mixx2[j]=signalr(sst*i+j*dtt,0)
-		#print mixx[j]
-	mixx=fft.fft(mixx)
-	snlr[i]=mixx[0:len(snlr[i])]
+	mixx=fft.fftshift(fft.fft(mixx))
+	for j in range(len(mixx)):
+		ph=-pi*pow((j-len(mixx)/2)*sp2/len(mixx),2)/k
+		mixx[j]=mixx[j]*complex(cos(ph),sin(ph))
+	snlr[i]=flipud(mixx[0:len(mixx)/2])
 	print "i:"+str(i)
 		#print j
 imsave("test.bmp",real(snlr));
@@ -77,9 +79,12 @@ imsave("test3.bmp",real(snl3));
 print time.time()-stp
 print "4"
 def rcmc(ll,fr):
-	a=-(2*c*fr*sqrt(((2*freq+c*fr)*(2*freq-c*fr)*(pow(h,2)+pow(ll,2)))/4))/(-pow(c,2)*pow(fr,2)+4*pow(freq,2))
-	rrr=sqrt(pow(ll,2)+pow(h,2)+pow(a,2))
-	return rrr
+	if(((2*freq+c*fr)*(2*freq-c*fr)*(pow(h,2)+pow(ll,2)))>0):
+		a=-(2*c*fr*sqrt(((2*freq+c*fr)*(2*freq-c*fr)*(pow(h,2)+pow(ll,2)))/4))/(-pow(c,2)*pow(fr,2)+4*pow(freq,2))
+		rrr=sqrt(pow(ll,2)+pow(h,2)+pow(a,2))
+		return rrr
+	else:
+		return (-1)
 
 snl4=zeros([int(x/dx),int(l/dl)],dtype=complex)
 for i in range(len(snl4)):
@@ -104,7 +109,7 @@ for i in range(len(filt)):
 imsave("filt.bmp",real(filt));
 snl6=zeros([int(x/dx),int(l/dl)],dtype=complex)
 for i in range(len(snl6[0])):
-	snl6[:,i]=convolve(snl5[:,i],flipud(conjugate(filt[:,i])),'same')
+	snl6[:,i]=signal.fftconvolve(snl5[:,i],flipud(conjugate(filt[:,i])),'same')
 imsave("test6.bmp",abs(snl6));
 print time.time()-stp
 print "m"
