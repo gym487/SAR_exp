@@ -9,9 +9,9 @@ h=100
 lmin=100
 l=800
 x=500
-dx=0.1
+dx=0.05
 dl=0.5
-k=5e9
+k=5e11
 c=3e8
 bw=1e7
 st=bw/k
@@ -21,10 +21,10 @@ pwr=100
 tm=2e-5
 slen=tm*sp
 dt=1/sp
-v=10
+v=1
 sst=dx/v
 sp2=1e5
-dtt=1/sp2
+dtt=1.0/sp2
 
 def signalr(t,par):
 	tt=pi*k*pow((t%st)-st/2,2)
