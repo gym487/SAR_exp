@@ -5,7 +5,8 @@ import scipy
 import time
 import cmath
 from struct import *
-v=0.082
+from scipy.signal import *
+v=0.095
 h=0.15
 lmin=0.0001
 l=1.5
@@ -35,6 +36,7 @@ print slen
 print "1"
 stp=time.time()
 snls=zeros(int(sp*st),dtype=complex)
+
 for i in  range(len(snls)):
 	snls[i]=signalr(i/sp,0)
 snlr=zeros([int(x/dx),int(slen)],dtype=complex)
@@ -46,6 +48,7 @@ def PointTarget(rxx,t,px,py):
 	return signalr(t-tos,-2*pi*tos*freq)/pow(rr,4)
 		
 snlss=zeros(int(slen),dtype=float)
+snlssi=zeros(int(slen),dtype=float)
 for i in  range(len(snlr)):
 	for j in  range(slen):
 		#print i,j
@@ -54,8 +57,12 @@ for i in  range(len(snlr)):
 	avg=sum(snlss)/len(snlss)
 	#print avg
 	for j in  range(slen):
+		snlss[j]-=avg
+	snlssi=hilbert(snlss)
+	for j in  range(slen):
+		#snlssi
 		tt=j/sp
-		snlr[i][j]=dc(tt,snlss[j]-avg)
+		snlr[i][j]=dc(tt,complex(snlss[j],snlssi[j]))
 		#print snlr[i][j]
 		#print j
 imsave("test.bmp",real(snlr));
