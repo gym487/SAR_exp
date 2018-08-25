@@ -9,21 +9,21 @@ h=100
 lmin=100
 l=800
 x=500
-dx=0.05
+dx=0.25
 dl=0.5
-k=5e11
+k=4e8
 c=3e8
 bw=1e7
 st=bw/k
 sp=1.5e7
-freq=1e9
+freq=5e8
 pwr=100
 tm=2e-5
 slen=tm*sp
 dt=1/sp
-v=1
+v=10
 sst=dx/v
-sp2=1e5
+sp2=1e6
 dtt=1.0/sp2
 
 def signalr(t,par):
@@ -61,7 +61,7 @@ for i in  range(len(snlr)):
 		mixx[j]=(PointTarget(i,j*dtt,lmin+l/2,x/2)+PointTarget(i,j*dtt,lmin+l/2,x/2+100)+PointTarget(i,j*dtt,lmin+l/2+100,x/2))*conjugate(signalr(i*sst+j*dtt,0))
 	mixx=fft.fftshift(fft.fft(mixx))
 	for j in range(len(mixx)):
-		ph=-pi*pow((j-len(mixx)/2)*sp2/len(mixx),2)/k
+		ph=pi*pow((j-len(mixx)/2)*sp2/len(mixx),2)/k
 		mixx[j]=mixx[j]*complex(cos(ph),sin(ph))
 	snlr[i]=flipud(mixx[0:len(mixx)/2])
 	print "i:"+str(i)

@@ -6,7 +6,7 @@ import time
 import cmath
 from struct import *
 from scipy.signal import *
-v=0.095
+v=0.09
 h=0.15
 lmin=0.0001
 l=1.5
@@ -15,7 +15,7 @@ x=1000*dx
 dl=0.002
 st=512/5e5
 c=340
-bw=3e5
+bw=5e3
 k=-bw/st
 sp=5e5
 freq=4e4
@@ -72,6 +72,7 @@ print "2"
 for i in range(len(snlr)):
 	snl2[i]=convolve(snlr[i],flipud(conjugate(snls)),'same')
 imsave("test2.bmp",real(snl2));
+imsave("testb.bmp",abs(snl2));
 print time.time()-stp
 print "3"
 snl3=fft.fftshift(fft.fft(snl2,axis=0),axes=0)
